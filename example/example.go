@@ -15,14 +15,16 @@ func main() {
 	c, err := ssdbcl.New(ssdbcl.Config{
 		Host:    "127.0.0.1",
 		Port:    6380,
-		Auth:    "",
+		Auth:    "auth_string",
 		Timeout: 3,
 	})
 
 	defer c.Close()
 	if err != nil {
 		log.Printf("conn err:%s\n", err.Error())
+		return
 	}
+
 	ks, kvs := []string{}, []string{}
 	for i := 1; i < 100; i++ {
 		ks = append(ks, fmt.Sprintf("example_test.%d", i))

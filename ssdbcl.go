@@ -55,20 +55,59 @@ func New(c Config) (*Client, error) {
 
 	conn.SetDeadline(time.Now().Add(time.Second * time.Duration(c.Timeout)))
 
-	return &Client{
+	cl := &Client{
 		sock: conn,
-	}, nil
+	}
+
+	if len(c.Auth) > 0 {
+
+		if err := cl.auth(c.Auth); err != nil {
+			cl.Close()
+			return cl, err
+		}
+	}
+
+	return cl, nil
 }
 
-func (c *Client) Close() error {
-	return c.sock.Close()
+func (c *Client) auth(a string) error {
+
+	auth_rs_state := ""
+
+	for try := 0; try < 3; try++ {
+
+		auth_rs_state = c.Cmd("auth", a).State
+		if auth_rs_state == ReplyOk {
+			break
+		}
+
+		time.Sleep(1e9)
+	}
+
+	if auth_rs_state != ReplyOk {
+		return fmt.Errorf("auth error:%s", auth_rs_state)
+	}
+
+	return nil
+}
+
+func (c *Client) Close() {
+
+	if c != nil && c.sock != nil {
+		c.sock.Close()
+		c.sock = nil
+	}
 }
 
 func (c *Client) Cmd(args ...interface{}) *Reply {
 
 	reply := &Reply{
-		State: "not_found",
+		State: "client_error",
 		Data:  []string{},
+	}
+
+	if c.sock == nil {
+		return reply
 	}
 
 	if err := c.send(args); err != nil {

@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+const (
+	ReplyOk = "ok"
+)
+
 type Config struct {
 	Host    string
 	Port    uint16
@@ -19,7 +23,8 @@ type Config struct {
 }
 
 type Client struct {
-	sock *net.TCPConn
+	sock     *net.TCPConn
+	recv_buf bytes.Buffer
 }
 
 type KeyValue struct {
@@ -98,7 +103,7 @@ func (c *Client) send(args []interface{}) error {
 
 		switch arg := arg.(type) {
 		case byte:
-			s = fmt.Sprintf("%c", arg)
+			s = fmt.Sprintf("%d", arg)
 
 		case []byte:
 			s = string(arg)
@@ -175,60 +180,103 @@ func (c *Client) send(args []interface{}) error {
 
 func (c *Client) recv() ([]string, error) {
 
-	var (
-		buf  [8192]byte
-		idx  = 0
-		resp []string
-	)
+	var tmp [8192]byte
 
 	for {
 
-		n, err := c.sock.Read(buf[0:])
+		resp := c.parse()
+		if resp == nil || len(resp) > 0 {
+			return resp, nil
+		}
+
+		n, err := c.sock.Read(tmp[0:])
 		if err != nil {
 			return nil, err
 		}
 
-		offset := 0
-
-		for {
-
-			idx = bytes.IndexByte(buf[offset:], '\n')
-			if idx == -1 {
-				//				log.Printf("----------------------------------idx:%d\n", idx)
-				break
-			}
-
-			p := buf[offset : offset+idx]
-
-			//log.Printf("*****************************idx:%d--p:%s#########\n", idx, string(p))
-
-			offset += idx + 1
-
-			if len(p) == 0 || (len(p) == 1 && p[0] == '\r') {
-
-				if len(resp) > 0 {
-					return resp, nil
-				}
-
-				continue
-			}
-
-			if size, err := strconv.Atoi(string(p)); err != nil || size < 1 {
-				resp = append(resp, string(p))
-				continue
-			}
-
-			if offset >= n {
-				break
-			}
-		}
+		c.recv_buf.Write(tmp[0:n])
 	}
-
-	return resp, nil
 }
 
-func (r *Reply) StateString() string {
-	return r.State
+func (c *Client) parse() []string {
+
+	var (
+		idx    = 0
+		offset = 0
+		resp   []string
+		buf    = c.recv_buf.Bytes()
+	)
+
+	for {
+
+		idx = bytes.IndexByte(buf[offset:], '\n')
+		if idx == -1 {
+			//log.Printf("---------idx:%d---buf:%s\n", idx, string(buf[offset:]))
+			break
+		}
+
+		p := buf[offset : offset+idx]
+
+		offset += idx + 1
+		//log.Printf("********idx:%d--p:%s#########\n", idx, string(p))
+
+		if len(p) == 0 || (len(p) == 1 && p[0] == '\r') {
+
+			if len(resp) == 0 {
+				continue
+			} else {
+				c.recv_buf.Next(offset)
+				return resp
+			}
+		}
+
+		size, err := strconv.Atoi(string(p))
+		if err != nil || size < 0 {
+			return nil
+		}
+
+		if offset+size >= c.recv_buf.Len() {
+			break
+		}
+
+		v := buf[offset : offset+size]
+
+		resp = append(resp, string(v))
+
+		offset += size + 1
+	}
+
+	return []string{}
+}
+
+func (r *Reply) Int() int {
+
+	if len(r.Data) < 1 {
+		return 0
+	}
+
+	i, _ := strconv.Atoi(r.Data[0])
+	return i
+}
+
+func (r *Reply) Int32() int32 {
+
+	if len(r.Data) < 1 {
+		return 0
+	}
+
+	i, _ := strconv.Atoi(r.Data[0])
+	return int32(i)
+}
+
+func (r *Reply) Int64() int64 {
+
+	if len(r.Data) < 1 {
+		return 0
+	}
+
+	i, _ := strconv.ParseInt(r.Data[0], 10, 64)
+	return i
 }
 
 func (r *Reply) Bytes() []byte {
@@ -262,7 +310,7 @@ func (r *Reply) Hash() []KeyValue {
 	kvs := []KeyValue{}
 
 	dlen := len(r.Data)
-	for i := 0; i < dlen; i += 2 {
+	for i := 0; i < dlen-1; i += 2 {
 
 		kvs = append(kvs, KeyValue{
 			Key:   r.Data[i],

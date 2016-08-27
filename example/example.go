@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -22,6 +23,25 @@ func main() {
 	if err != nil {
 		log.Printf("conn err:%s\n", err.Error())
 	}
+	ks, kvs := []string{}, []string{}
+	for i := 1; i < 100; i++ {
+		ks = append(ks, fmt.Sprintf("example_test.%d", i))
+		kvs = append(kvs, fmt.Sprintf("example_test.%d", i))
+		kvs = append(kvs, fmt.Sprintf("example_value.%d", i))
+	}
+
+	if rs := c.Cmd("multi_set", kvs); rs.State != ssdbcl.ReplyOk {
+		log.Printf("multi_set error state::%s\n", rs.State)
+	}
+
+	rs := c.Cmd("multi_get", ks).Hash()
+	for _, v := range rs {
+		log.Printf("v.key:%s v.value:%s\n", v.Key, v.Value)
+	}
+
+	if rs := c.Cmd("multi_del", ks); rs.State != ssdbcl.ReplyOk {
+		log.Printf("multi_del error:%d\n", rs.State)
+	}
 
 	//
 	c.Cmd("set", "test.0", "val.0")
@@ -35,7 +55,6 @@ func main() {
 
 	rsp = c.Cmd("scan", "0", "z", 10)
 	log.Printf("**scan** state:%s rsp:%v\n", rsp.State, rsp.Hash())
-
 	// etc...
 
 	time.Sleep(2e9)

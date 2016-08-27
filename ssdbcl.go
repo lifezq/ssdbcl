@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"time"
 )
 
 const (
@@ -16,10 +15,9 @@ const (
 )
 
 type Config struct {
-	Host    string
-	Port    uint16
-	Auth    string
-	Timeout uint8
+	Host string
+	Port uint16
+	Auth string
 }
 
 type Client struct {
@@ -49,46 +47,19 @@ func New(c Config) (*Client, error) {
 		return nil, err
 	}
 
-	if c.Timeout < 1 {
-		c.Timeout = 3
-	}
-
-	conn.SetDeadline(time.Now().Add(time.Second * time.Duration(c.Timeout)))
-
 	cl := &Client{
 		sock: conn,
 	}
 
 	if len(c.Auth) > 0 {
 
-		if err := cl.auth(c.Auth); err != nil {
+		if auth_rs_state := cl.Cmd("auth", c.Auth).State; auth_rs_state != ReplyOk {
 			cl.Close()
-			return cl, err
+			return cl, fmt.Errorf("auth error:%s", auth_rs_state)
 		}
 	}
 
 	return cl, nil
-}
-
-func (c *Client) auth(a string) error {
-
-	auth_rs_state := ""
-
-	for try := 0; try < 3; try++ {
-
-		auth_rs_state = c.Cmd("auth", a).State
-		if auth_rs_state == ReplyOk {
-			break
-		}
-
-		time.Sleep(1e9)
-	}
-
-	if auth_rs_state != ReplyOk {
-		return fmt.Errorf("auth error:%s", auth_rs_state)
-	}
-
-	return nil
 }
 
 func (c *Client) Close() {

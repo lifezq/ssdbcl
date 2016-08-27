@@ -13,10 +13,9 @@ import (
 func main() {
 
 	c, err := ssdbcl.New(ssdbcl.Config{
-		Host:    "127.0.0.1",
-		Port:    6380,
-		Auth:    "auth_string",
-		Timeout: 3,
+		Host: "127.0.0.1",
+		Port: 6380,
+		Auth: "auth_string",
 	})
 
 	defer c.Close()

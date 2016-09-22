@@ -11,10 +11,9 @@ import (
 func conn() (*Client, error) {
 
 	c, err := New(Config{
-		Host:    "127.0.0.1",
-		Port:    6380,
-		Auth:    "",
-		Timeout: 3,
+		Host: "127.0.0.1",
+		Port: 6380,
+		Auth: "",
 	})
 
 	if err != nil {

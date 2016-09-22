@@ -333,12 +333,7 @@ func (r *Reply) Hash() []KeyValue {
 
 func (r *Reply) ReplyJson(v interface{}) error {
 
-	defer func() {
-
-		if r := recover(); r != nil {
-			return
-		}
-	}()
+	defer recover()
 
 	if len(r.Data) < 1 {
 		return fmt.Errorf("Not Found")

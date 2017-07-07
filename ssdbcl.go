@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	ReplyOk = "ok"
+	ReplyOK = "ok"
 )
 
 type Config struct {
@@ -53,7 +53,7 @@ func New(c Config) (*Client, error) {
 
 	if len(c.Auth) > 0 {
 
-		if auth_rs_state := cl.Cmd("auth", c.Auth).State; auth_rs_state != ReplyOk {
+		if auth_rs_state := cl.Cmd("auth", c.Auth).State; auth_rs_state != ReplyOK {
 			cl.Close()
 			return cl, fmt.Errorf("auth error:%s", auth_rs_state)
 		}
@@ -305,6 +305,19 @@ func (r *Reply) String() string {
 	}
 
 	return r.Data[0]
+}
+
+func (r *Reply) Bool() bool {
+
+	if len(r.Data) < 1 {
+		return false
+	}
+
+	if b, err := strconv.ParseBool(r.Data[0]); err == nil {
+		return b
+	}
+
+	return false
 }
 
 func (r *Reply) List() []string {

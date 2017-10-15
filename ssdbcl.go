@@ -289,6 +289,26 @@ func (r *Reply) Int64() int64 {
 	return i
 }
 
+func (r *Reply) Uint64() uint64 {
+
+	if len(r.Data) < 1 {
+		return 0
+	}
+
+	i, _ := strconv.ParseUint(r.Data[0], 10, 64)
+	return i
+}
+
+func (r *Reply) Float64() float64 {
+
+	if len(r.Data) < 1 {
+		return 0
+	}
+
+	i, _ := strconv.ParseFloat(r.Data[0], 64)
+	return i
+}
+
 func (r *Reply) Bytes() []byte {
 
 	if len(r.Data) < 1 {

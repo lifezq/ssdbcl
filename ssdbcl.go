@@ -354,3 +354,7 @@ func (r *Reply) ReplyJson(v interface{}) error {
 
 	return json.Unmarshal([]byte(r.Data[0]), &v)
 }
+
+func (r *Reply) ReplyOk() bool {
+	return r.State == ReplyOK
+}

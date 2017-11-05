@@ -24,6 +24,7 @@ type Config struct {
 type Client struct {
 	sock     *net.TCPConn
 	recv_buf bytes.Buffer
+	cfg      *Config
 	cmdchan  chan bool
 }
 
@@ -37,7 +38,7 @@ type Reply struct {
 	Data  []string
 }
 
-func New(c Config) (*Client, error) {
+func New(c *Config) (*Client, error) {
 
 	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.Host, c.Port))
 	if err != nil {
@@ -51,6 +52,7 @@ func New(c Config) (*Client, error) {
 
 	cl := &Client{
 		sock:    conn,
+		cfg:     c,
 		cmdchan: make(chan bool, 1),
 	}
 
@@ -87,27 +89,38 @@ func (c *Client) Cmd(args ...interface{}) *Reply {
 		return reply
 	}
 
-	c.sock.SetDeadline(time.Now().Add(3 * time.Second))
+	for redo := 1; redo <= 3; redo++ {
 
-	if err := c.send(args); err != nil {
-		<-c.cmdchan
-		return reply
-	}
+		if redo == 3 {
+			c.Close()
+			if conn, err := New(c.cfg); err == nil {
+				*c = *conn
+			}
+		}
 
-	resp, err := c.recv()
-	if err != nil {
-		<-c.cmdchan
-		return reply
-	}
+		c.sock.SetDeadline(time.Now().Add(3 * time.Second))
 
-	for k, s := range resp {
-
-		if k == 0 {
-			reply.State = s
+		if err := c.send(args); err != nil {
+			time.Sleep(time.Duration(redo*100) * time.Millisecond)
 			continue
 		}
 
-		reply.Data = append(reply.Data, s)
+		resp, err := c.recv()
+		if err != nil {
+			time.Sleep(time.Duration(redo*100) * time.Millisecond)
+			continue
+		}
+
+		for k, s := range resp {
+			if k == 0 {
+				reply.State = s
+				continue
+			}
+
+			reply.Data = append(reply.Data, s)
+		}
+
+		break
 	}
 
 	<-c.cmdchan
@@ -355,18 +368,18 @@ func (r *Reply) List() []string {
 	return r.Data
 }
 
-func (r *Reply) Hash() []KeyValue {
+func (r *Reply) Hash() []*KeyValue {
 
 	if len(r.Data) < 2 {
-		return []KeyValue{}
+		return []*KeyValue{}
 	}
 
-	kvs := []KeyValue{}
+	kvs := []*KeyValue{}
 
 	dlen := len(r.Data)
 	for i := 0; i < dlen-1; i += 2 {
 
-		kvs = append(kvs, KeyValue{
+		kvs = append(kvs, &KeyValue{
 			Key:   r.Data[i],
 			Value: r.Data[i+1],
 		})
@@ -388,4 +401,15 @@ func (r *Reply) ReplyJson(v interface{}) error {
 
 func (r *Reply) ReplyOk() bool {
 	return r.State == ReplyOK
+}
+
+func (kv *KeyValue) ReplyJson(v interface{}) error {
+
+	defer recover()
+
+	if kv == nil {
+		return fmt.Errorf("Not Found")
+	}
+
+	return json.Unmarshal([]byte(kv.Value), &v)
 }

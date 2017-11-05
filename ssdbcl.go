@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"time"
 )
 
 const (
@@ -23,6 +24,7 @@ type Config struct {
 type Client struct {
 	sock     *net.TCPConn
 	recv_buf bytes.Buffer
+	cmdchan  chan bool
 }
 
 type KeyValue struct {
@@ -48,7 +50,8 @@ func New(c Config) (*Client, error) {
 	}
 
 	cl := &Client{
-		sock: conn,
+		sock:    conn,
+		cmdchan: make(chan bool, 1),
 	}
 
 	if len(c.Auth) > 0 {
@@ -72,21 +75,28 @@ func (c *Client) Close() {
 
 func (c *Client) Cmd(args ...interface{}) *Reply {
 
+	c.cmdchan <- false
+
 	reply := &Reply{
 		State: "client_error",
 		Data:  []string{},
 	}
 
 	if c.sock == nil {
+		<-c.cmdchan
 		return reply
 	}
 
+	c.sock.SetDeadline(time.Now().Add(3 * time.Second))
+
 	if err := c.send(args); err != nil {
+		<-c.cmdchan
 		return reply
 	}
 
 	resp, err := c.recv()
 	if err != nil {
+		<-c.cmdchan
 		return reply
 	}
 
@@ -100,6 +110,7 @@ func (c *Client) Cmd(args ...interface{}) *Reply {
 		reply.Data = append(reply.Data, s)
 	}
 
+	<-c.cmdchan
 	return reply
 }
 

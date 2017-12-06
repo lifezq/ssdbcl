@@ -323,6 +323,16 @@ func (r *Reply) Uint64() uint64 {
 	return i
 }
 
+func (r *Reply) Float32() float32 {
+
+	if len(r.Data) < 1 {
+		return 0
+	}
+
+	i, _ := strconv.ParseFloat(r.Data[0], 32)
+	return float32(i)
+}
+
 func (r *Reply) Float64() float64 {
 
 	if len(r.Data) < 1 {

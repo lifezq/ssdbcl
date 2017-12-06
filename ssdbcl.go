@@ -245,7 +245,7 @@ func (c *Client) parse() []string {
 
 		idx = bytes.IndexByte(buf[offset:], '\n')
 		if idx == -1 {
-			//log.Printf("---------idx:%d---buf:%s\n", idx, string(buf[offset:]))
+			// log.Printf("---------idx:%d---buf:%s\n", idx, string(buf[offset:]))
 			break
 		}
 
@@ -368,18 +368,18 @@ func (r *Reply) List() []string {
 	return r.Data
 }
 
-func (r *Reply) Hash() []*KeyValue {
+func (r *Reply) Hash() []KeyValue {
 
 	if len(r.Data) < 2 {
-		return []*KeyValue{}
+		return []KeyValue{}
 	}
 
-	kvs := []*KeyValue{}
+	kvs := []KeyValue{}
 
 	dlen := len(r.Data)
 	for i := 0; i < dlen-1; i += 2 {
 
-		kvs = append(kvs, &KeyValue{
+		kvs = append(kvs, KeyValue{
 			Key:   r.Data[i],
 			Value: r.Data[i+1],
 		})
@@ -403,11 +403,11 @@ func (r *Reply) ReplyOk() bool {
 	return r.State == ReplyOK
 }
 
-func (kv *KeyValue) ReplyJson(v interface{}) error {
+func (kv KeyValue) ReplyJson(v interface{}) error {
 
 	defer recover()
 
-	if kv == nil {
+	if kv.Key == "" {
 		return fmt.Errorf("Not Found")
 	}
 

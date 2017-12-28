@@ -283,6 +283,14 @@ func (c *Client) parse() []string {
 	return []string{}
 }
 
+func (r *Reply) Int8() int8 {
+	return int8(r.Int())
+}
+
+func (r *Reply) Uint8() uint8 {
+	return uint8(r.Int())
+}
+
 func (r *Reply) Int() int {
 
 	if len(r.Data) < 1 {
@@ -293,14 +301,32 @@ func (r *Reply) Int() int {
 	return i
 }
 
+func (r *Reply) Int16() int16 {
+	return int16(r.Int())
+}
+
+func (r *Reply) Uint16() uint16 {
+	return uint16(r.Int())
+}
+
 func (r *Reply) Int32() int32 {
 
 	if len(r.Data) < 1 {
 		return 0
 	}
 
-	i, _ := strconv.Atoi(r.Data[0])
+	i, _ := strconv.ParseInt(r.Data[0], 10, 32)
 	return int32(i)
+}
+
+func (r *Reply) Uint32() uint32 {
+
+	if len(r.Data) < 1 {
+		return 0
+	}
+
+	i, _ := strconv.ParseInt(r.Data[0], 10, 32)
+	return uint32(i)
 }
 
 func (r *Reply) Int64() int64 {

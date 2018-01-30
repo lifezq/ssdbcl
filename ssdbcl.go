@@ -171,6 +171,12 @@ func (c *Client) send(args []interface{}) error {
 		case int8:
 			s = fmt.Sprintf("%d", arg)
 
+		case int16:
+			s = fmt.Sprintf("%d", arg)
+
+		case uint16:
+			s = fmt.Sprintf("%d", arg)
+
 		case int32:
 			s = fmt.Sprintf("%d", arg)
 
@@ -182,6 +188,9 @@ func (c *Client) send(args []interface{}) error {
 
 		case uint64:
 			s = fmt.Sprintf("%d", arg)
+
+		case float32:
+			s = fmt.Sprintf("%f", arg)
 
 		case float64:
 			s = fmt.Sprintf("%f", arg)

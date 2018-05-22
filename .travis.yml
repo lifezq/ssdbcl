@@ -5,8 +5,13 @@ go:
   - 1.10.1
   - 1.10.2
 services:
-  - ssdb-server
+
 before_install:
+  - wget --no-check-certificate https://github.com/ideawu/ssdb/archive/master.zip
+  - unzip master
+  - cd ssdb-master
+  - make
+  - ./ssdb-server -d ssdb.conf
   - go get -v ./...
   - go get -v github.com/modocache/gover
   - go get -v github.com/mattn/goveralls

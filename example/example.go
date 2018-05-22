@@ -41,7 +41,7 @@ func main() {
 	}
 
 	if rs := c.Cmd("multi_del", ks); rs.State != ssdbcl.ReplyOK {
-		log.Printf("multi_del error:%d\n", rs.State)
+		log.Printf("multi_del error:%s\n", rs.State)
 	}
 
 	//

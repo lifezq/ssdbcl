@@ -12,7 +12,7 @@ import (
 
 func main() {
 
-	c, err := ssdbcl.New(ssdbcl.Config{
+	c, err := ssdbcl.New(&ssdbcl.Config{
 		Host: "127.0.0.1",
 		Port: 6380,
 		Auth: "auth_string",
@@ -31,7 +31,7 @@ func main() {
 		kvs = append(kvs, fmt.Sprintf("example_value.%d", i))
 	}
 
-	if rs := c.Cmd("multi_set", kvs); rs.State != ssdbcl.ReplyOk {
+	if rs := c.Cmd("multi_set", kvs); rs.State != ssdbcl.ReplyOK {
 		log.Printf("multi_set error state::%s\n", rs.State)
 	}
 
@@ -40,7 +40,7 @@ func main() {
 		log.Printf("v.key:%s v.value:%s\n", v.Key, v.Value)
 	}
 
-	if rs := c.Cmd("multi_del", ks); rs.State != ssdbcl.ReplyOk {
+	if rs := c.Cmd("multi_del", ks); rs.State != ssdbcl.ReplyOK {
 		log.Printf("multi_del error:%d\n", rs.State)
 	}
 

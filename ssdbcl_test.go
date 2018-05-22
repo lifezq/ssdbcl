@@ -11,10 +11,10 @@ import (
 
 func conn() (*Client, error) {
 
-	c, err := New(Config{
+	c, err := New(&Config{
 		Host: "127.0.0.1",
-		Port: 6380,
-		Auth: "a7ff9034fbb85559574a6f515686ebd9",
+		Port: 8888,
+		Auth: "",
 	})
 
 	if err != nil {
@@ -123,7 +123,7 @@ func TestCmdScan(t *testing.T) {
 			}
 
 			if rs := c.Cmd("multi_del", ks); rs.State != ReplyOK {
-				t.Errorf("scan.multi_del error:%d\n", rs.State)
+				t.Errorf("scan.multi_del error:%s\n", rs.State)
 			}
 
 		}()
@@ -161,7 +161,7 @@ func TestCmdMultiSetGetDel(t *testing.T) {
 			}
 
 			if rs := c.Cmd("multi_set", kvs); rs.State != ReplyOK {
-				t.Errorf("multi_set error:%d\n", rs.State)
+				t.Errorf("multi_set error:%s\n", rs.State)
 			}
 
 			rs := c.Cmd("multi_get", ks).Hash()
@@ -174,7 +174,7 @@ func TestCmdMultiSetGetDel(t *testing.T) {
 			}
 
 			if rs := c.Cmd("multi_del", ks); rs.State != ReplyOK {
-				t.Errorf("multi_del error:%d\n", rs.State)
+				t.Errorf("multi_del error:%s\n", rs.State)
 			}
 
 		}()

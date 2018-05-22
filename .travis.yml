@@ -1,0 +1,18 @@
+sudo: true
+language: go
+go:
+  - 1.9.1
+  - 1.10.1
+  - 1.10.2
+services:
+  - ssdb-server
+before_install:
+  - go get -v ./...
+  - go get -v github.com/modocache/gover
+  - go get -v github.com/mattn/goveralls
+script:
+  - go fmt ./...
+  - go vet ./...
+  - go test -v -coverprofile=cmd.coverprofile -run Cmd 
+  - gover
+  - goveralls -coverprofile=gover.coverprofile -service=travis-ci

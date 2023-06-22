@@ -1,0 +1,22 @@
+version: build-{build}.{branch}
+
+build: off
+
+clone_folder: c:\gopath\src\github.com\lifezq\ssdbcl
+
+environment:
+  GOPATH: c:\gopath
+  CGO_ENABLED: 0
+
+install:
+  - go version
+  - go env
+  
+before_test:
+  - set PATH=C:\go\bin;%PATH%
+  - set GOROOT=C:\go
+  - go vet ./...
+
+test_script:
+  - go test ./...
+  

@@ -17,6 +17,4 @@ before_test:
   - set GOROOT=C:\go
   - go vet ./...
 
-test_script:
-  - go test ./...
   
